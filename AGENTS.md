@@ -1,5 +1,13 @@
 # Cal.diy Development Guide for AI Agents
 
+## Base44 dev environment
+
+- Run the app with `docker compose -f docker-compose.base44.yml up -d` (postgres + `web` on `node:22`, source bind-mounted, `yarn dev` with Turbopack on port 3000).
+- First boot is slow (~10 min): `yarn install` + `prisma generate` + `prisma migrate deploy` run in the container's command.
+- Required env: `DATABASE_URL`/`DATABASE_DIRECT_URL` (compose), `NEXTAUTH_SECRET` + `CALENDSO_ENCRYPTION_KEY` (platform secrets at `/run/base44/app.env`; next.config throws without them), and `NEXT_PUBLIC_WEBAPP_URL`/`NEXTAUTH_URL` set to the preview origin.
+- `apps/web/next.config.ts` adds `allowedDevOrigins` from `BASE44_PUBLIC_HOST_SUFFIX` so the preview origin can load dev assets.
+- Verify: `curl -s localhost:3000/ -L | grep title` → first-run page is `/auth/setup`.
+
 You are a senior Cal.diy engineer working in a Yarn/Turbo monorepo. You prioritize type safety, security, and small, reviewable diffs.
 
 ## Do
