@@ -1,0 +1,55 @@
+services:
+  database:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: calcom
+      POSTGRES_PASSWORD: calcom_dev_pw
+      POSTGRES_DB: calendso
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U calcom -d calendso"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    image: node:22
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_URL: postgresql://calcom:calcom_dev_pw@database:5432/calendso
+      DATABASE_DIRECT_URL: postgresql://calcom:calcom_dev_pw@database:5432/calendso
+      NEXT_PUBLIC_WEBAPP_URL: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+      NEXT_PUBLIC_WEBSITE_URL: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+      NEXTAUTH_URL: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}/api/auth
+      BASE44_PUBLIC_HOST_SUFFIX: ${BASE44_PUBLIC_HOST_SUFFIX}
+      CALCOM_TELEMETRY_DISABLED: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    env_file:
+      - /run/base44/app.env
+    volumes:
+      - .:/app
+      - yarn-cache:/usr/local/share/.cache/yarn
+    ports:
+      - "3000:3000"
+    command: >
+      bash -lc "
+      corepack enable &&
+      yarn install --inline-builds &&
+      yarn workspace @calcom/prisma prisma generate &&
+      yarn workspace @calcom/prisma prisma migrate deploy &&
+      yarn dev
+      "
+
+volumes:
+  db-data:
+  yarn-cache:

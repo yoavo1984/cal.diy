@@ -257,6 +257,9 @@ const nextConfig = (phase: string): NextConfig => {
       unoptimized: true,
     },
     turbopack: {},
+    ...(process.env.BASE44_PUBLIC_HOST_SUFFIX
+      ? { allowedDevOrigins: [`3000-${process.env.BASE44_PUBLIC_HOST_SUFFIX}`] }
+      : {}),
     async rewrites() {
       const { orgSlug } = nextJsOrgRewriteConfig;
       const beforeFiles = [
